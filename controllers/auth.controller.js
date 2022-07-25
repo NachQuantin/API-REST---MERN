@@ -1,0 +1,84 @@
+import { User } from "../models/User.js";
+import { generateRefreshToken, generateToken } from "../utils/generateToKen.js";
+
+export const register = async (req,res) =>{
+const {email, password} = req.body;
+    try {
+        //alternativa buscando por email
+       let user = await User.findOne({email});
+        if (user) throw {code: 11000};
+
+
+        user = new User ({ email, password});
+        await user.save();
+
+        //generar el token jwt
+        const {token, expiresIn } = generateToken(user.id);
+        generateRefreshToken(user.id, res)
+
+        //generar jwt token
+        return res.status(201).json({ token, expiresIn });
+    } catch (error) {
+        console.log(error);
+
+        //alternativa por defecto mongoose
+        if (error.code === 11000) {
+            return res.status(400).json({ error: "ya existe este usuario"});
+        }
+        return res.status(500).json({ error: "Error de servidor"});
+    }
+};
+
+export const login = async (req,res) => {
+    try {
+        const {email, password} = req.body;
+        //Validacion que existe el correo 
+        let user = await User.findOne({ email });
+        if (!user) 
+        return res.status(403).json({ error: "No existe este usuario"});
+//Respuesta de password en caso negativo
+        const respuestaPassword =  await user.comparePassword(password)
+        if (!respuestaPassword){
+            return res.status(403).json({ error: "Contraseña Incorrecta"});
+        }
+//paso todas la validaciones y se genera el Json Web Token
+//JWT
+const {token, expiresIn } = generateToken(user.id);
+generateRefreshToken(user.id, res)
+
+      return res.json({ token, expiresIn });  
+    } catch (error) {
+        console.log (error);
+        return res.status(500).json({ error: "Error de servidor"});
+    }   
+;}
+
+export const infoUser = async (req,res) => {
+    try {
+        const user = await User.findById(req.uid).lean()
+        return res.json({ email: user.email, uid: user.id });
+    } catch (error) {
+        return res.status(500).json({error: "error de server"});
+    }
+};
+
+export const refreshToken = (req, res) => {
+    try {
+        const { token, expiresIn } = generateToken(req.uid);
+        return res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: !(process.env.MODO === "developer"),
+            expires: new Date(Date.now() + expiresIn * 1000),
+        }).json({ token, expiresIn });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ error: "error de server" });
+    }
+};
+
+//cierre de sesion 
+
+export const logout = (req, res) =>{
+    res.clearCookie("refreshToken")
+    res.json({ok: true})
+};
