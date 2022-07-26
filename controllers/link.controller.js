@@ -31,15 +31,15 @@ export const getLinks = async (req, res) => {
 //para CRUD tradicional 
 export const getLink= async (req,res) => {
     try {
-        const {id} = req.params
-        const link = await Link.findById(id);
+        const {nanoLink} = req.params
+        const link = await Link.findOne({nanoLink});
 
         if (!link) return res.status(404).json({ error: "no existe el link"});
+//DE PRUEBA PARA CONSULTAR POR ID 
+        // if(!link.uid.equals(req.uid))
+        //  return res.status(401).json({ error: "No le pertenece ese id"});
 
-        if(!link.uid.equals(req.uid))
-         return res.status(401).json({ error: "No le pertenece ese id"});
-
-        return res.json({ link });
+        return res.json({ longLink: link.longLink});
     } catch (error) {
         console.log(error);
         if (error.kind === "ObjectId"){
