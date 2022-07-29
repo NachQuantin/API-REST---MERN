@@ -1,6 +1,7 @@
 import { Link } from "../models/Link.js";
 import { nanoid } from "nanoid";
 
+
 export const getLinks = async (req, res) => {
     try {
         const links = await Link.find({ uid: req.uid });

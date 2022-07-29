@@ -2,6 +2,8 @@ import { Router } from "express";
 import { createLink, getLink, getLinks, removeLink, updateLink } from "../controllers/link.controller.js";
 import {requireToken} from "../middlewares/requireToken.js";
 import { bodyLinkValidator, paramLinkValidator } from "../middlewares/validatorGenerate.js";
+
+
 const router = Router();
 
 //GET /api/v1/links ALL LINKS
